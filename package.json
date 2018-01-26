@@ -1,0 +1,48 @@
+{
+  "name": "fritter-crawler",
+  "description": "crawl the fritter network",
+  "version": "0.1.0",
+  "author": "Nate Goldman <ungoldman@gmail.com> (http://ungoldman.com/)",
+  "bin": {
+    "fritter-crawler": "index.js"
+  },
+  "bugs": {
+    "url": "https://github.com/ungoldman/fritter-crawler/issues"
+  },
+  "dependencies": {
+    "dat-dns": "^2.0.0",
+    "hyperdiscovery": "^7.0.0",
+    "hyperdrive": "^9.12.1",
+    "is-url": "^1.2.2",
+    "mkdirp": "^0.5.1",
+    "p-queue": "^2.3.0",
+    "random-access-memory": "^2.4.0"
+  },
+  "devDependencies": {
+    "node-repl": "^2.0.2",
+    "standard": "^10.0.3",
+    "standard-version": "^4.3.0"
+  },
+  "homepage": "https://github.com/ungoldman/fritter-crawler#readme",
+  "keywords": [
+    "beaker",
+    "crawler",
+    "dat",
+    "fritter",
+    "p2p"
+  ],
+  "license": "ISC",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ungoldman/fritter-crawler.git"
+  },
+  "scripts": {
+    "dev": "node-repl index.js",
+    "postrelease": "npm publish",
+    "prerelease": "npm t && standard-version",
+    "release": "git push --follow-tags origin master",
+    "start": "./index.js",
+    "test": "standard"
+  }
+}
