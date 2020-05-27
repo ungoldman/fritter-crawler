@@ -3,9 +3,6 @@
   "description": "crawl the fritter network",
   "version": "0.1.0",
   "author": "Nate Goldman <ungoldman@gmail.com> (http://ungoldman.com/)",
-  "bin": {
-    "fritter-crawler": "index.js"
-  },
   "bugs": {
     "url": "https://github.com/ungoldman/fritter-crawler/issues"
   },
@@ -15,13 +12,14 @@
     "hyperdrive": "^9.12.1",
     "is-url": "^1.2.2",
     "mkdirp": "^0.5.1",
+    "ngraph.graph": "^19.1.0",
     "p-queue": "^2.3.0",
-    "random-access-memory": "^2.4.0"
+    "parcel-bundler": "^1.12.4",
+    "random-access-memory": "^2.4.0",
+    "vis-network": "^7.6.9"
   },
   "devDependencies": {
-    "node-repl": "^2.0.2",
-    "standard": "^10.0.3",
-    "standard-version": "^4.3.0"
+    "nodemon": "^2.0.4"
   },
   "homepage": "https://github.com/ungoldman/fritter-crawler#readme",
   "keywords": [
@@ -38,11 +36,7 @@
     "url": "git+https://github.com/ungoldman/fritter-crawler.git"
   },
   "scripts": {
-    "dev": "node-repl index.js",
-    "postrelease": "npm publish",
-    "prerelease": "npm t && standard-version",
-    "release": "git push --follow-tags origin master",
-    "start": "./index.js",
-    "test": "standard"
+    "dev": "nodemon analyze-fritter-network.js",
+    "start": "parcel index.html --open"
   }
 }

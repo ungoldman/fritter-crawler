@@ -1,155 +1,84 @@
-#!/usr/bin/env node
+/* global vis */
 
-var discovery = require('hyperdiscovery')
-var ram = require('random-access-memory')
-var hyperdrive = require('hyperdrive')
-var pkg = require('./package.json')
-var datDns = require('dat-dns')()
-var mkdirp = require('mkdirp')
-var isUrl = require('is-url')
-var PQ = require('p-queue')
-var path = require('path')
-var fs = require('fs')
+import nodes from './graph/nodes'
+import edges from './graph/edges'
 
-var users = {}
+let network
 
-var profile = 'dat://fritter-ungoldman.hashbase.io'
-var concurrency = 10
-
-var q = new PQ({ concurrency })
-
-var jobId = 0
-
-mkdirp.sync('./fritters')
-mkdirp.sync('./not-fritters')
-
-var startup = [
-  `fritter crawler ${pkg.version}`,
-  `patient zero: ${profile}`,
-  `concurrency: ${concurrency}\n`
-]
-
-startup.forEach(msg => console.log(msg))
-
-q.add(worker(profile))
-  .catch(err => console.error('ERROR', 'Promise Rejection', err))
-
-q.onIdle().then(() => {
-  console.log(`All done. Total jobs processed: ${jobId}`)
-  process.exit(0)
-})
-
-function worker (url) {
-  var id = jobId++
-
-  return () => {
-    var key = stripTrailingSlash(url)
-
-    console.log(
-      `job: ${id}`,
-      `link: ${key}`,
-      `queue: ${q.size}`,
-      `pending: ${q.pending}`
-    )
-
-    return new Promise((resolve, reject) => {
-      // wait for 30 seconds before timeout
-      var timeout = setTimeout(() => {
-        console.log(`job: ${id}`, 'TIMEOUT', key)
-        resolve()
-      }, 30 * 1000)
-
-      addLink(key, users, (err, profile) => {
-        clearTimeout(timeout)
-
-        if (err) {
-          console.error(`job: ${id}`, 'ERROR', key, err)
-          return resolve()
-        }
-
-        if (!profile || !profile.follows) return resolve()
-
-        profile.follows.forEach(follow => {
-          if (stripTrailingSlash(follow.url) in users) return
-          q.add(worker(follow.url))
-        })
-
-        resolve()
-      })
-    })
-  }
-}
-
-function addLink (key, db, callback) {
-  if (key in db) return callback()
-
-  db[key] = {}
-
-  getDatLink(key, (err, datLink) => {
-    if (err) return callback(err)
-
-    if (key !== datLink) {
-      db[key] = { alias: datLink }
-
-      key = datLink
-      db[key] = {}
+function redrawAll () {
+  var container = document.getElementById('mynetwork')
+  // var options = {
+  //   nodes: {
+  //     shape: 'dot',
+  //     scaling: {
+  //       min: 10,
+  //       max: 30
+  //     },
+  //     font: {
+  //       size: 12,
+  //       face: 'Tahoma'
+  //     }
+  //   },
+  //   edges: {
+  //     color: { inherit: true },
+  //     width: 0.15,
+  //     smooth: {
+  //       type: 'continuous'
+  //     }
+  //   },
+  //   interaction: {
+  //     hideEdgesOnDrag: true,
+  //     tooltipDelay: 200
+  //   },
+  //   configure: {
+  //     filter: function (option, path) {
+  //       if (option === 'inherit') {
+  //         return true
+  //       }
+  //       if (option === 'type' && path.indexOf('smooth') !== -1) {
+  //         return true
+  //       }
+  //       if (option === 'roundness') {
+  //         return true
+  //       }
+  //       if (option === 'hideEdgesOnDrag') {
+  //         return true
+  //       }
+  //       if (option === 'hideNodesOnDrag') {
+  //         return true
+  //       }
+  //       return false
+  //     },
+  //     container: document.getElementById('optionsContainer'),
+  //     showButton: false
+  //   },
+  //   physics: false
+  // }
+  var options = {
+    nodes: {
+      shape: "dot",
+      size: 16
+    },
+    physics: {
+      forceAtlas2Based: {
+        gravitationalConstant: -26,
+        centralGravity: 0.005,
+        springLength: 230,
+        springConstant: 0.18
+      },
+      maxVelocity: 146,
+      solver: "forceAtlas2Based",
+      timestep: 0.35,
+      stabilization: { iterations: 150 }
     }
+  }
 
-    getArchive(key, (err, profile) => {
-      if (err) return callback(err)
+  var data = { nodes: nodes, edges: edges }
 
-      db[key] = profile
+  // Note: data is coming from ./data/WorldCup2014.js
+  network = new vis.Network(container, data, options)
 
-      var filename = stripDatProtocol(key) + '.json'
-      var dir = profile.notFound ? 'not-fritters' : 'fritters'
-
-      fs.writeFile(path.join(dir, filename), JSON.stringify(profile, null, 2), (err) => {
-        if (err) throw err
-      })
-
-      callback(null, profile)
-    })
-  })
+  console.log(network)
 }
 
-function getArchive (key, callback) {
-  var archive = hyperdrive(ram, stripDatProtocol(key))
-
-  archive.on('error', callback)
-
-  archive.on('ready', () => {
-    discovery(archive)
-
-    archive.readFile('profile.json', 'utf-8', (err, data) => {
-      if (err) {
-        if (err.notFound) {
-          // capture error message
-          return callback(null, Object.assign({}, err, { message: err.message }))
-        }
-        return callback(err)
-      }
-
-      var profile = JSON.parse(data)
-
-      archive.close()
-
-      callback(null, profile)
-    })
-  })
-}
-
-function getDatLink (url, callback) {
-  if (!isUrl(url)) return callback(null, url)
-
-  datDns.resolveName(url)
-    .then(key => callback(null, key))
-    .catch(err => callback(err))
-}
-
-function stripDatProtocol (link) {
-  return link.replace(/^dat:\/\//, '')
-}
-
-function stripTrailingSlash (link) {
-  return link.replace(/\/$/, '')
-}
+redrawAll()

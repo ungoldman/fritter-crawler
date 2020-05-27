@@ -1,3 +1,6 @@
+We're navigating the wrong way
+---
+
 # fritter-crawler
 
 Rough draft of a script for crawling the [fritter](https://github.com/beakerbrowser/fritter) network.
